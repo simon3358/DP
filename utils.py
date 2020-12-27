@@ -14,13 +14,16 @@ def create_tweet_vectors(tweets, phrase_model, train_ratio, with_sentiment):
 
     train_vectors = []
     train_labels = []
+    valid_vectors = []
+    valid_labels = []
     test_vectors = []
     test_labels = []
     
     tweet_count = len(tweets)
-    limit = int(train_ratio * tweet_count)
+    train_limit = int(train_ratio * tweet_count)
+    valid_limit = train_limit + int((1-train_ratio)/2 * tweet_count)
 
-    for i in range(0,limit):    
+    for i in range(0, train_limit):    
         tokens = tokenizer.tokenize(tweets['Text'][i])
         if with_sentiment:
             train_vectors.append(np.append(np.sum([phrase_model[x] for x in tokens], axis=0) / len(tokens),tweets['Sentiment'][i]))
@@ -28,7 +31,15 @@ def create_tweet_vectors(tweets, phrase_model, train_ratio, with_sentiment):
             train_vectors.append(np.sum([phrase_model[x] for x in tokens], axis=0) / len(tokens))
         train_labels.append(tweets['Label'][i])
         
-    for i in range(limit, tweet_count):
+    for i in range(train_limit, valid_limit):
+        tokens = tokenizer.tokenize(tweets['Text'][i])
+        if with_sentiment:
+            valid_vectors.append(np.append(np.sum([phrase_model[x] for x in tokens], axis=0) / len(tokens),tweets['Sentiment'][i]))
+        else:
+            valid_vectors.append(np.sum([phrase_model[x] for x in tokens], axis=0) / len(tokens))
+        valid_labels.append(tweets['Label'][i])
+        
+    for i in range(valid_limit, tweet_count):
         tokens = tokenizer.tokenize(tweets['Text'][i])
         if with_sentiment:
             test_vectors.append(np.append(np.sum([phrase_model[x] for x in tokens], axis=0) / len(tokens),tweets['Sentiment'][i]))
@@ -36,7 +47,7 @@ def create_tweet_vectors(tweets, phrase_model, train_ratio, with_sentiment):
             test_vectors.append(np.sum([phrase_model[x] for x in tokens], axis=0) / len(tokens))
         test_labels.append(tweets['Label'][i])
 
-    return train_vectors, train_labels, test_vectors, test_labels
+    return train_vectors, train_labels, valid_vectors, valid_labels, test_vectors, test_labels
 
 
 def create_emoji_tweets(tweets, emoji_model, path):
