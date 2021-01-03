@@ -140,13 +140,3 @@ def encode_data_get_embeddings(tweets, train_ratio, w2v, e2v):
             embedding_matrix[index] = embedding_vector
     
     return train_x, train_y, test_x, test_y, embedding_matrix
-
-
-
-
-
-
-
-
-
-
