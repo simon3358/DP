@@ -64,7 +64,7 @@ def create_emoji_tweets(tweets, emoji_model, path):
                 emoji_list.append(i)
                 break
 
-    tweets.loc[emoji_list].reset_index(drop=True).to_csv(path)
+    tweets.loc[emoji_list].reset_index(drop=True).to_csv(path, index=False)
     
     
 def create_emoji_sentiment(tweets, emoji_model):
@@ -97,7 +97,8 @@ def encode_data_get_embeddings(tweets, train_ratio, w2v, e2v):
 
     # One-hot encoding labelu
     y = np.array(tweets['Label'].apply(lambda x: 1 if x == 'Positive' else (0 if x =='Neutral' else -1)))
-#     y = np.array(tweets['Label'].apply(lambda x: 1 if x == 'Positive' else 0))
+#     y = np.array(tweets['Label'].apply(lambda x: 1 if x == 'sad' else (0 if x =='others' else (2 if x =='happy' else -1))))
+
 
     tweet_count = len(tweets)
     limit = int(train_ratio * tweet_count)

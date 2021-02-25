@@ -1,5 +1,5 @@
 import tensorflow.keras as keras
-from tensorflow.keras.layers import Dense, Embedding, SimpleRNN, GRU, LSTM, Bidirectional, Dropout, Conv1D, GlobalMaxPooling1D
+from tensorflow.keras.layers import Dense, Embedding, SimpleRNN, GRU, LSTM, Bidirectional, Dropout, Attention, Conv1D, GlobalMaxPooling1D
 
 
 class BaselineModel(keras.Model):
@@ -51,7 +51,8 @@ class LstmModel(keras.Model):
                               weights=[embedding_matrix],
                               input_length=80,
                               trainable=False)
-        self.lstm = LSTM(128)
+        self.lstm = LSTM(128, return_sequences=True)
+#         self.attent = Attention(name='attention_weight')
         self.dense = Dense(units=1, activation='sigmoid')  
         
     def call(self, x):  
@@ -70,7 +71,7 @@ class BiLstmModel(keras.Model):
                               weights=[embedding_matrix],
                               input_length=80,
                               trainable=False)
-        self.bilstm = Bidirectional(LSTM(256, return_sequences=True))
+        self.bilstm = Bidirectional(LSTM(256))
         self.dense = Dense(units=1, activation='sigmoid')  
         
     def call(self, x):  
