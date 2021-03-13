@@ -2,6 +2,7 @@ from nltk.tokenize import TweetTokenizer
 import numpy as np
 import re
 from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from emosent import get_emoji_sentiment_rank
 
@@ -88,7 +89,7 @@ def create_emoji_sentiment(tweets, emoji_model):
 def encode_data_get_embeddings(tweets, train_ratio, w2v, e2v):
     tw_tok = TweetTokenizer(preserve_case=False, reduce_len=True, strip_handles=True)
     
-    tweets = tweets.sample(frac=1).reset_index(drop=True)
+#     tweets = tweets.sample(frac=1).reset_index(drop=True)
     
     # Preprocessing textu
     tweets['Text'] = tweets['Text'].apply(lambda x: ' '.join([w for w in tw_tok.tokenize(x)]))
@@ -96,9 +97,11 @@ def encode_data_get_embeddings(tweets, train_ratio, w2v, e2v):
     x = np.array(tweets['Text'])
 
     # One-hot encoding labelu
-    y = np.array(tweets['Label'].apply(lambda x: 1 if x == 'Positive' else (0 if x =='Neutral' else -1)))
-#     y = np.array(tweets['Label'].apply(lambda x: 1 if x == 'sad' else (0 if x =='others' else (2 if x =='happy' else -1))))
+    y = np.array(tweets['Label'].apply(lambda x: 1 if x == 'Positive' else (0 if x =='Neutral' else 2)))
+#     y = np.array(tweets['Label'].apply(lambda x: 1 if x == 'sad' else (0 if x =='others' else (2 if x =='happy' else 3))))
 
+
+    y = to_categorical(y)
 
     tweet_count = len(tweets)
     limit = int(train_ratio * tweet_count)
@@ -110,14 +113,45 @@ def encode_data_get_embeddings(tweets, train_ratio, w2v, e2v):
     
     tokenizer = Tokenizer(num_words=5000)
     tokenizer.fit_on_texts(train_x)
+    
+    train_tweets = train_x
+    test_tweets = train_x
 
     train_x = tokenizer.texts_to_sequences(train_x)
     test_x = tokenizer.texts_to_sequences(test_x)
-
-    vocab_size = len(tokenizer.word_index) + 1
-
-    train_x = pad_sequences(train_x, padding='post', maxlen=80)
-    test_x = pad_sequences(test_x, padding='post', maxlen=80)
+    
+    train_x = pad_sequences(train_x, maxlen=79)
+    test_x = pad_sequences(test_x,  maxlen=79)
+    
+    sent_arr = np.zeros((len(train_x),1))   # create array of zeros
+    for i in range(0, len(train_x)):
+        sent = 0
+        l = 0
+        for char in train_tweets[i]:
+            try:
+                sent += get_emoji_sentiment_rank(char)["sentiment_score"] 
+                l+=1
+            except:
+                pass
+        if l>0:
+            sent /= l    
+        sent_arr[i] = sent+1
+    train_x = np.append(train_x, sent_arr, axis=1)
+    
+    sent_arr = np.zeros((len(test_x),1))   # create array of zeros
+    for i in range(0, len(test_x)):
+        sent = 0
+        l = 0
+        for char in test_tweets[i]:
+            try:
+                sent += get_emoji_sentiment_rank(char)["sentiment_score"] 
+                l+=1
+            except:
+                pass
+        if l>0:
+            sent /= l    
+        sent_arr[i] = sent+1
+    test_x = np.append(test_x, sent_arr, axis=1)
     
     embeddings_dictionary = dict()
 
@@ -134,6 +168,8 @@ def encode_data_get_embeddings(tweets, train_ratio, w2v, e2v):
             vector_dimensions = np.asarray(records[1:], dtype='float32')
             embeddings_dictionary[word] = vector_dimensions
 
+    vocab_size = len(tokenizer.word_index) + 1
+            
     embedding_matrix = np.zeros((vocab_size, 300))
     for word, index in tokenizer.word_index.items():
         embedding_vector = embeddings_dictionary.get(word)
