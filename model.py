@@ -52,7 +52,6 @@ class LstmModel(keras.Model):
                               input_length=80,
                               trainable=False)
         self.lstm = LSTM(128, return_sequences=True)
-#         self.attent = Attention(name='attention_weight')
         self.dense = Dense(units=1, activation='sigmoid')  
         
     def call(self, x):  
@@ -74,15 +73,44 @@ class BiLstmModel(keras.Model):
         self.lstm = Bidirectional(LSTM(256, return_sequences=True))
         self.bilstm = Bidirectional(LSTM(256))
         self.dense = Dense(units=3, activation='softmax')  
-#         self.dense = Dense(units=1, activation='sigmoid')  
         
     def call(self, x):  
         x = self.embe(x)
         x = self.bilstm(x) 
         x = self.dense(x) 
+        return x   
+    
+    
+class ConvModel(keras.Model):
+    
+    def __init__(self, embedding_matrix):
+        super(ConvModel, self).__init__()
+        self.embe = Embedding(embedding_matrix.shape[0],
+                              300,
+                              weights=[embedding_matrix],
+                              input_length=80,
+                              trainable=False)
+        self.drop = Dropout(0.5) 
+        self.conv = Conv1D(300, 7, padding="valid", activation="relu", strides=3)
+        self.pool = GlobalMaxPooling1D()
+        self.van_dense = Dense(300, activation="relu")
+        self.dense = Dense(units=1, activation='sigmoid')  
+        
+    def call(self, x):  
+        x = self.embe(x)
+        x = self.drop(x)
+        
+        x = self.conv(x)  
+        x = self.conv(x) 
+        x = self.pool(x) 
+        
+        x = self.van_dense(x)
+        x = self.drop(x)
+        
+        x = self.dense(x) 
         return x
     
-    
+        
 class TestModel(keras.Model):
     
     def __init__(self, embedding_matrix):
@@ -135,38 +163,6 @@ class CombiModel(keras.Model):
         x = self.lstm(x)
         x = self.dense(x) 
         return x
-    
-    
-    
-class ConvModel(keras.Model):
-    
-    def __init__(self, embedding_matrix):
-        super(ConvModel, self).__init__()
-        self.embe = Embedding(embedding_matrix.shape[0],
-                              300,
-                              weights=[embedding_matrix],
-                              input_length=80,
-                              trainable=False)
-        self.drop = Dropout(0.5) 
-        self.conv = Conv1D(300, 7, padding="valid", activation="relu", strides=3)
-        self.pool = GlobalMaxPooling1D()
-        self.van_dense = Dense(300, activation="relu")
-        self.dense = Dense(units=1, activation='sigmoid')  
-        
-    def call(self, x):  
-        x = self.embe(x)
-        x = self.drop(x)
-        
-        x = self.conv(x)  
-        x = self.conv(x) 
-        x = self.pool(x) 
-        
-        x = self.van_dense(x)
-        x = self.drop(x)
-        
-        x = self.dense(x) 
-        return x
-    
     
     
     

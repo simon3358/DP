@@ -1,0 +1,4 @@
+gensim==4.0.1
+tensorflow==2.5.0
+emosent-py==0.1.6
+vaderSentiment==3.3.2
