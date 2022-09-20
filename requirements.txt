@@ -1,4 +1,4 @@
 gensim==4.0.1
-tensorflow==2.5.0
+tensorflow==2.7.2
 emosent-py==0.1.6
 vaderSentiment==3.3.2
